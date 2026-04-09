@@ -16,3 +16,6 @@ venv/
 htmlcov/
 *.log
 .DS_Store
+paper/*.aux
+paper/*.log
+paper/*.out
