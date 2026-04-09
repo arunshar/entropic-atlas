@@ -55,6 +55,8 @@ class VisionPipeline:
     def __init__(self, llm: LLMClient, max_video_frames: int = 30):
         self.llm = llm
         self.max_video_frames = max_video_frames
+        # Lazy-loaded local detector for structured preprocessing
+        self._detector = None
 
     async def process_file(
         self, name: str, mime_type: str, data: str | bytes
@@ -75,7 +77,7 @@ class VisionPipeline:
             return f"[Unsupported file: {name} ({mime_type})]"
 
     async def _process_image(self, name: str, data: str | bytes) -> str:
-        """Analyze image with vision model."""
+        """Analyze image with local detector + vision model."""
         image_bytes = self._decode_data(data)
 
         # Ensure valid JPEG
@@ -89,11 +91,37 @@ class VisionPipeline:
         except Exception as e:
             logger.warning(f"Image preprocessing failed for {name}: {e}")
 
+        # Step 1: Run local detector for structured object counts (if available)
+        detection_text = ""
+        try:
+            from fieldwork.detector import get_detector
+            detector = get_detector()
+            detection = await detector.detect(image_bytes)
+            detection_text = detection.to_structured_text()
+            if detection_text:
+                logger.info(f"Local detection for {name}: {detection.total_objects} objects")
+        except Exception as e:
+            logger.debug(f"Local detection skipped for {name}: {e}")
+
+        # Step 2: VLM analysis (enriched with detection context if available)
+        prompt = VISION_PROMPT
+        if detection_text:
+            prompt = (
+                f"{VISION_PROMPT}\n\n"
+                f"IMPORTANT: A detection model has already identified the following objects. "
+                f"Use these EXACT counts — do NOT re-count:\n{detection_text}"
+            )
+
         description = await self.llm.vision_analyze(
             image_bytes=image_bytes,
-            prompt=VISION_PROMPT,
+            prompt=prompt,
         )
-        return f"[Image: {name}]\n{description}"
+
+        parts = [f"[Image: {name}]"]
+        if detection_text:
+            parts.append(detection_text)
+        parts.append(description)
+        return "\n".join(parts)
 
     def _process_pdf(self, name: str, data: str | bytes) -> str:
         """Extract text from PDF."""
