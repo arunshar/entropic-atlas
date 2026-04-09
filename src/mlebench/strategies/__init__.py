@@ -7,14 +7,17 @@ from mlebench.strategies.nlp import NLP_TEMPLATE
 from mlebench.strategies.vision_ml import VISION_TEMPLATE
 from mlebench.strategies.timeseries import TIMESERIES_TEMPLATE
 from mlebench.strategies.general import GENERAL_TEMPLATE
+from mlebench.strategies.autogluon import AUTOGLUON_TEMPLATE
 
 
 STRATEGY_MAP = {
-    "tabular": TABULAR_TEMPLATE,
+    "tabular": AUTOGLUON_TEMPLATE,  # AutoGluon is the default for tabular (falls back to LightGBM)
+    "tabular_basic": TABULAR_TEMPLATE,  # Manual LightGBM/XGBoost
     "nlp": NLP_TEMPLATE,
     "vision": VISION_TEMPLATE,
     "timeseries": TIMESERIES_TEMPLATE,
     "general": GENERAL_TEMPLATE,
+    "autogluon": AUTOGLUON_TEMPLATE,
 }
 
 
