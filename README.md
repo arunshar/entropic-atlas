@@ -2,7 +2,7 @@
 
 **Spatial-aware research agent for AgentX-AgentBeats Phase 2, Sprint 2 — Research Agent Track**
 
-> From the creators of [entropic-crmarenapro](https://github.com/YOUR_USERNAME/entropic-crmarenapro) (1st Place, Sprint 1 Business Process Track)
+> From the creators of [entropic-crmarenapro](https://github.com/arunshar/entropic-crmarenapro) (1st Place, Sprint 1 Business Process Track)
 
 ## What It Does
 
@@ -76,7 +76,7 @@ Continued from the winning entropic-crmarenapro approach:
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/entropic-atlas.git
+git clone https://github.com/arunshar/entropic-atlas.git
 cd entropic-atlas
 
 # Setup
