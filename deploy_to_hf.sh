@@ -17,8 +17,18 @@ echo "Cloning Space repo..."
 git clone "$SPACE_REPO" "$WORK_DIR/space"
 
 echo "Copying project files..."
-# Copy everything except .git, .github, tests, scenarios
-rsync -av --exclude='.git' --exclude='.github' --exclude='tests' --exclude='scenarios' \
+# Copy project files, excluding local-only and build artifacts.
+# The Dockerfile rebuilds from pyproject.toml so .venv/ is never needed.
+rsync -av \
+  --exclude='.git' \
+  --exclude='.github' \
+  --exclude='.venv' \
+  --exclude='.claude' \
+  --exclude='.pytest_cache' \
+  --exclude='__pycache__' \
+  --exclude='.DS_Store' \
+  --exclude='tests' \
+  --exclude='scenarios' \
   "$(dirname "$0")/" "$WORK_DIR/space/"
 
 # Create the Space-specific README (overwrites the project README)
