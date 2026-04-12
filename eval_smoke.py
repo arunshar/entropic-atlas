@@ -7,8 +7,11 @@ formatted answer back. Used as the deploy verification harness: run it after
 every redeploy before claiming the Space is healthy.
 
 Usage:
-    # Smoke-test the live Space (default target).
+    # Smoke-test the live Space (default target, text-only).
     uv run python eval_smoke.py
+
+    # Smoke-test with an image (exercises the full vision pipeline).
+    uv run python eval_smoke.py --image path/to/warehouse.jpg
 
     # Smoke-test a local server.
     uv run python eval_smoke.py --url http://127.0.0.1:9019/
@@ -22,14 +25,19 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
 import json
+import mimetypes
 import sys
 import uuid
+from pathlib import Path
 
 import httpx
 from a2a.client import A2AClient
 from a2a.types import (
     AgentCard,
+    FilePart,
+    FileWithBytes,
     Message,
     MessageSendParams,
     Part,
@@ -41,15 +49,25 @@ from a2a.types import (
 
 DEFAULT_URL = "https://arun0808-entropic-atlas.hf.space/"
 
-# A minimal FieldWorkArena-style goal string. This exercises the goal
-# parser, classifier, reasoner, and AnswerFormatter (numeric format path).
-SMOKE_GOAL = """# Question
+# Text-only goal (no image). Exercises parser, classifier, reasoner, formatter.
+SMOKE_GOAL_TEXT_ONLY = """# Question
 How many fire extinguishers are visible in a typical warehouse loading dock with two workers present?
 
 # Input Data
 
 # Output Format
 number
+"""
+
+# Goal used when --image is provided. The answer depends on actual image content.
+SMOKE_GOAL_WITH_IMAGE = """# Question
+Describe all safety-relevant objects visible in this image. Count each distinct type.
+
+# Input Data
+{image_name}
+
+# Output Format
+json
 """
 
 
@@ -59,6 +77,13 @@ def _parse_args() -> argparse.Namespace:
         "--url",
         default=DEFAULT_URL,
         help=f"Base URL of the Entropic Atlas server (default: {DEFAULT_URL})",
+    )
+    parser.add_argument(
+        "--image",
+        type=str,
+        default=None,
+        help="Path to a local image (jpg/png) to attach. Exercises the full "
+        "vision + spatial pipeline instead of the text-only path.",
     )
     parser.add_argument(
         "--timeout",
@@ -91,23 +116,56 @@ async def _fetch_agent_card(base_url: str, timeout: float) -> AgentCard:
     return card
 
 
-async def _send_smoke_message(card: AgentCard, base_url: str, timeout: float) -> str:
+async def _send_smoke_message(
+    card: AgentCard,
+    base_url: str,
+    timeout: float,
+    image_path: str | None = None,
+) -> str:
     """
-    Fire one send_message round-trip with SMOKE_GOAL. Returns the first
-    text block in the response. Raises on transport or protocol error.
+    Fire one send_message round-trip. Returns the first text block in the
+    response. Raises on transport or protocol error.
+
+    If image_path is set, sends an image-attached goal that exercises the
+    full vision + spatial scene graph pipeline. Otherwise sends a text-only
+    goal that validates the parser/reasoner/formatter path.
     """
+    parts: list[Part] = []
+
+    if image_path:
+        img = Path(image_path)
+        if not img.exists():
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+        raw = img.read_bytes()
+        b64 = base64.b64encode(raw).decode("ascii")
+        mime = mimetypes.guess_type(img.name)[0] or "image/jpeg"
+        parts.append(Part(root=TextPart(
+            text=SMOKE_GOAL_WITH_IMAGE.format(image_name=img.name)
+        )))
+        parts.append(Part(root=FilePart(
+            file=FileWithBytes(
+                bytes=b64,
+                name=img.name,
+                mime_type=mime,
+            )
+        )))
+        label = f"image-attached ({img.name}, {len(raw)} bytes)"
+    else:
+        parts.append(Part(root=TextPart(text=SMOKE_GOAL_TEXT_ONLY)))
+        label = "text-only (no files)"
+
     async with httpx.AsyncClient(timeout=timeout) as http:
         client = A2AClient(httpx_client=http, agent_card=card, url=base_url)
 
         message = Message(
             role=Role.user,
-            parts=[Part(root=TextPart(text=SMOKE_GOAL))],
+            parts=parts,
             message_id=str(uuid.uuid4()),
         )
         params = MessageSendParams(message=message)
         request = SendMessageRequest(id=str(uuid.uuid4()), params=params)
 
-        print("[..] Sending synthetic FieldWorkArena task...")
+        print(f"[..] Sending synthetic FieldWorkArena task ({label})...")
         response = await client.send_message(request=request)
 
     # SendMessageResponse wraps a success or error root. Extract text from
@@ -199,7 +257,9 @@ async def _main_async() -> int:
         return 1
 
     try:
-        answer = await _send_smoke_message(card, args.url, args.timeout)
+        answer = await _send_smoke_message(
+            card, args.url, args.timeout, image_path=args.image
+        )
     except Exception as e:
         print(f"[FAIL] send_message round-trip failed: {e}", file=sys.stderr)
         return 1
