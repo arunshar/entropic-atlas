@@ -1,5 +1,5 @@
 """
-Entropic Atlas: Output Format Matcher
+Spatial Atlas: Output Format Matcher
 
 Ensures answers match the expected output format for FieldWorkArena scoring.
 Critical because the green agent uses exact_match, must_include, json_match, etc.
@@ -10,7 +10,7 @@ import json
 import logging
 import re
 
-logger = logging.getLogger("entropic-atlas.fieldwork.formatter")
+logger = logging.getLogger("spatial-atlas.fieldwork.formatter")
 
 
 # Output-format keywords that mean "this is a yes/no question."

@@ -1,5 +1,5 @@
 """
-Entropic Atlas — FieldWork Reasoning Engine
+Spatial Atlas — FieldWork Reasoning Engine
 
 Combines spatial scene analysis, file evidence, and entropy-guided
 reasoning to produce accurate answers for FieldWorkArena tasks.
@@ -12,7 +12,7 @@ from entropy.engine import EntropyEngine
 from fieldwork.spatial import SpatialScene
 from llm import LLMClient
 
-logger = logging.getLogger("entropic-atlas.fieldwork.reasoner")
+logger = logging.getLogger("spatial-atlas.fieldwork.reasoner")
 
 
 REASONING_SYSTEM_PROMPT = """You are an expert field operations and safety analyst.

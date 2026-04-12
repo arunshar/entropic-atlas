@@ -1,12 +1,12 @@
-# Entropic Atlas
+# Spatial Atlas
 
 **Spatial-aware research agent for AgentX-AgentBeats Phase 2, Sprint 2 — Research Agent Track**
 
-> From the creators of [entropic-crmarenapro](https://github.com/arunshar/entropic-crmarenapro) (1st Place, Sprint 1 Business Process Track)
+> Builds on the 1st Place Sprint 1 Business Process Track approach
 
 ## What It Does
 
-Entropic Atlas is a unified purple agent that handles **two benchmarks** through a single A2A server:
+Spatial Atlas is a spatial-aware research agent built on **compute-grounded reasoning (CGR)**: compute what can be computed deterministically, then let LLMs reason only about what must be generated. It handles **two benchmarks** through a single A2A server:
 
 | Benchmark | What | Input | Output |
 |-----------|------|-------|--------|
@@ -56,7 +56,7 @@ Instead of asking LLMs to hallucinate spatial relationships:
 This yields correct distance measurements, accurate violation counts, and consistent JSON for `json_match` evaluation.
 
 ### 2. Entropy-Guided Reasoning
-Continued from the winning entropic-crmarenapro approach:
+Continued from the winning Sprint 1 approach:
 - Estimate confidence of initial answers
 - Trigger self-reflection when confidence is low
 - Prioritize high-information-gain reasoning paths
@@ -78,8 +78,8 @@ Earlier revisions collapsed Standard and Strong onto the same model, so the rout
 
 ```bash
 # Clone
-git clone https://github.com/arunshar/entropic-atlas.git
-cd entropic-atlas
+git clone https://github.com/arunshar/spatial-atlas.git
+cd spatial-atlas
 
 # Setup
 cp sample.env .env
@@ -96,10 +96,10 @@ curl http://localhost:9019/.well-known/agent-card.json
 
 ```bash
 # Build
-docker build -t entropic-atlas --platform linux/amd64 .
+docker build -t spatial-atlas --platform linux/amd64 .
 
 # Run
-docker run -p 9019:9019 --env-file .env entropic-atlas --host 0.0.0.0
+docker run -p 9019:9019 --env-file .env spatial-atlas --host 0.0.0.0
 ```
 
 ## Testing
@@ -156,4 +156,4 @@ MIT
 
 ---
 
-Built for Berkeley RDI AgentX-AgentBeats Competition by the Entropic team.
+Built for Berkeley RDI AgentX-AgentBeats Competition. Green agent infrastructure provided by the Entropic team.

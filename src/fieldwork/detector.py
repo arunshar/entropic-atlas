@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Local Object Detection Preprocessing
+Spatial Atlas — Local Object Detection Preprocessing
 
 Uses Florence-2 (or falls back to a simple prompt-based approach) to extract
 structured object counts and bounding boxes BEFORE sending to the LLM.
@@ -17,7 +17,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 
-logger = logging.getLogger("entropic-atlas.fieldwork.detector")
+logger = logging.getLogger("spatial-atlas.fieldwork.detector")
 
 # Detection results
 @dataclass

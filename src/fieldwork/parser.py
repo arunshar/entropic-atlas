@@ -1,5 +1,5 @@
 """
-Entropic Atlas — FieldWorkArena Goal Parser
+Spatial Atlas — FieldWorkArena Goal Parser
 
 Parses the structured goal string sent by the FWA green agent into
 a structured task object: query, input files, and output format.
@@ -20,7 +20,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-logger = logging.getLogger("entropic-atlas.fieldwork.parser")
+logger = logging.getLogger("spatial-atlas.fieldwork.parser")
 
 
 @dataclass

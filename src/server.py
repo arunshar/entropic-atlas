@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Spatial-Aware Research Agent (A2A Server)
+Spatial Atlas — Spatial-Aware Research Agent (A2A Server)
 
 Compute-grounded reasoning agent for AgentX-AgentBeats Phase 2 Sprint 2.
 Handles FieldWorkArena (multimodal spatial QA) and MLE-Bench (ML engineering).
@@ -32,7 +32,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("entropic-atlas")
+logger = logging.getLogger("spatial-atlas")
 
 
 def _resolve_public_url(card_url_arg: str | None, host: str, port: int) -> str:
@@ -43,7 +43,7 @@ def _resolve_public_url(card_url_arg: str | None, host: str, port: int) -> str:
       1. --card-url CLI arg (explicit override)
       2. PUBLIC_URL env var (operator-set, any deploy target)
       3. SPACE_HOST env var (auto-set by Hugging Face Spaces, e.g.
-         'arun0808-entropic-atlas.hf.space') which we turn into https://...
+         'arun0808-spatial-atlas.hf.space') which we turn into https://...
       4. Fallback: http://{host}:{port}/ for local dev
 
     Motivation: when the Space boots via the Dockerfile entrypoint, no
@@ -66,7 +66,7 @@ def _resolve_public_url(card_url_arg: str | None, host: str, port: int) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Entropic Atlas spatial-aware research agent.")
+    parser = argparse.ArgumentParser(description="Run Spatial Atlas spatial-aware research agent.")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind the server")
     parser.add_argument("--port", type=int, default=9019, help="Port to bind the server")
     parser.add_argument("--card-url", type=str, help="URL to advertise in the agent card")
@@ -106,7 +106,7 @@ def main():
     ]
 
     agent_card = AgentCard(
-        name="Entropic Atlas",
+        name="Spatial Atlas",
         description=(
             "Spatial-aware research agent built on compute-grounded reasoning (CGR). "
             "Deterministic spatial scene graphs replace VLM hallucination for field work "
@@ -135,7 +135,7 @@ def main():
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entropic Atlas</title>
+<title>Spatial Atlas</title>
 <style>
   body {{ font-family: system-ui, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }}
   h1 {{ margin-bottom: 0.25rem; }}
@@ -145,7 +145,7 @@ def main():
   code {{ background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 0.9rem; }}
 </style>
 </head><body>
-<h1>Entropic Atlas</h1>
+<h1>Spatial Atlas</h1>
 <p><span class="badge">v{agent_card.version}</span> Spatial-aware research agent (A2A)</p>
 <h2>Skills</h2>
 <ul>{skills_html}</ul>
@@ -154,7 +154,7 @@ def main():
   <li><a href="/.well-known/agent-card.json">Agent Card</a> (GET)</li>
   <li><code>POST /</code> for A2A JSON-RPC requests</li>
 </ul>
-<p><a href="https://github.com/arunshar/entropic-atlas">GitHub</a></p>
+<p><a href="https://github.com/arunshar/spatial-atlas">GitHub</a></p>
 </body></html>"""
         return HTMLResponse(html)
 
@@ -164,7 +164,7 @@ def main():
     )
 
     print("=" * 60)
-    print("Entropic Atlas -- Spatial-Aware Research Agent")
+    print("Spatial Atlas -- Spatial-Aware Research Agent")
     print("=" * 60)
     print(f"Server: http://{args.host}:{args.port}/")
     print(f"Agent Card: {agent_card.url}")

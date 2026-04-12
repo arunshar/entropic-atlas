@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Multimodal Vision Pipeline
+Spatial Atlas — Multimodal Vision Pipeline
 
 Processes all file types from FieldWorkArena:
 - Images (JPEG) → Vision model detailed description
@@ -22,7 +22,7 @@ from pypdf import PdfReader
 
 from llm import LLMClient
 
-logger = logging.getLogger("entropic-atlas.fieldwork.vision")
+logger = logging.getLogger("spatial-atlas.fieldwork.vision")
 
 # Vision prompt optimized for spatial/safety analysis
 VISION_PROMPT = (

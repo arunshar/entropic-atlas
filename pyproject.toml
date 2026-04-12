@@ -1,7 +1,7 @@
 [project]
-name = "entropic-atlas"
+name = "spatial-atlas"
 version = "1.0.0"
-description = "Spatial-aware research agent for AgentX-AgentBeats Phase 2 Sprint 2. Combines entropy-guided reasoning with structured spatial scene graphs for field work analysis, and systematic ML pipelines for Kaggle competition solving."
+description = "Spatial-aware research agent built on compute-grounded reasoning (CGR) for AgentX-AgentBeats Phase 2 Sprint 2. Deterministic spatial scene graphs, entropy-guided model routing, and self-healing ML pipelines for field work analysis and Kaggle competition solving."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

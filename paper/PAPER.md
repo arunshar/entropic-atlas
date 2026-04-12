@@ -1,4 +1,4 @@
-# Entropic Atlas: Entropy-Guided Spatial Reasoning for Unified Research Agent Benchmarks
+# Spatial Atlas: Entropy-Guided Spatial Reasoning for Unified Research Agent Benchmarks
 
 **Arun Sharma**
 UC Berkeley -- Berkeley RDI
@@ -8,7 +8,7 @@ arunsharma@berkeley.edu
 
 ## Abstract
 
-Entropic Atlas is a unified research agent that handles two challenging benchmarks through a single Agent-to-Agent (A2A) protocol server: FieldWorkArena, a multimodal spatial question-answering benchmark spanning factory, warehouse, and retail environments, and MLE-Bench, a suite of 75 Kaggle machine learning competitions requiring end-to-end ML engineering. Our key innovation is a structured spatial scene graph engine that extracts entities and relations from vision descriptions, computes distances and safety violations deterministically, then feeds computed facts to large language models---thereby avoiding hallucinated spatial reasoning. Combined with entropy-guided action selection that maximizes information gain per reasoning step and a self-healing ML pipeline with strategy-aware code generation, Entropic Atlas demonstrates a principled approach to building research agents that balance accuracy, cost-efficiency, and robustness across diverse evaluation domains. We present the system architecture, detail the spatial scene graph representation, describe the entropy-guided reasoning framework, and provide evaluation methodology across both benchmarks. Our approach achieves competitive performance while maintaining interpretability through structured intermediate representations and deterministic spatial computations.
+Spatial Atlas is a unified research agent that handles two challenging benchmarks through a single Agent-to-Agent (A2A) protocol server: FieldWorkArena, a multimodal spatial question-answering benchmark spanning factory, warehouse, and retail environments, and MLE-Bench, a suite of 75 Kaggle machine learning competitions requiring end-to-end ML engineering. Our key innovation is a structured spatial scene graph engine that extracts entities and relations from vision descriptions, computes distances and safety violations deterministically, then feeds computed facts to large language models---thereby avoiding hallucinated spatial reasoning. Combined with entropy-guided action selection that maximizes information gain per reasoning step and a self-healing ML pipeline with strategy-aware code generation, Spatial Atlas demonstrates a principled approach to building research agents that balance accuracy, cost-efficiency, and robustness across diverse evaluation domains. We present the system architecture, detail the spatial scene graph representation, describe the entropy-guided reasoning framework, and provide evaluation methodology across both benchmarks. Our approach achieves competitive performance while maintaining interpretability through structured intermediate representations and deterministic spatial computations.
 
 ---
 
@@ -18,7 +18,7 @@ The development of general-purpose research agents capable of operating across d
 
 Most existing agent architectures treat these benchmarks as independent problems, developing specialized systems for each (Yang et al., 2024; Hong et al., 2024). This fragmentation wastes shared infrastructure and misses opportunities for architectural insights that transfer across domains. For instance, the structured reasoning required to answer spatial questions ("How many pallets are within 3 meters of the emergency exit?") shares fundamental properties with the systematic hypothesis testing needed to select effective ML strategies ("Which feature engineering approach maximizes validation accuracy for this tabular dataset?").
 
-We present **Entropic Atlas**, a unified research agent that addresses both benchmarks through a single Agent-to-Agent (A2A) protocol server (Google, 2024). Our architecture is built on three key contributions:
+We present **Spatial Atlas**, a unified research agent that addresses both benchmarks through a single Agent-to-Agent (A2A) protocol server (Google, 2024). Our architecture is built on three key contributions:
 
 1. **Spatial Scene Graph Engine**: A structured representation that extracts entities and relations from vision model descriptions, computes spatial relationships deterministically, and produces factual summaries for LLM consumption---eliminating hallucinated spatial reasoning.
 
@@ -60,7 +60,7 @@ Active learning (Settles, 2009) and Bayesian experimental design (Chaloner & Ver
 
 ## 3. System Architecture
 
-Entropic Atlas operates as a dual-domain A2A server that receives task requests through a standardized protocol and routes them to the appropriate processing pipeline.
+Spatial Atlas operates as a dual-domain A2A server that receives task requests through a standardized protocol and routes them to the appropriate processing pipeline.
 
 ```
 +--------------------------------------------------+
@@ -99,7 +99,7 @@ Entropic Atlas operates as a dual-domain A2A server that receives task requests 
    +--------------------------------+
 ```
 
-**Figure 1:** Entropic Atlas system architecture. The A2A server routes incoming tasks to domain-specific handlers through a classifier. Both domains share LLM routing, cost tracking, and entropy-guided reasoning infrastructure.
+**Figure 1:** Spatial Atlas system architecture. The A2A server routes incoming tasks to domain-specific handlers through a classifier. Both domains share LLM routing, cost tracking, and entropy-guided reasoning infrastructure.
 
 ### Domain Classification
 
@@ -270,7 +270,7 @@ This loop repeats up to 3 iterations. If all iterations fail, a *dummy submissio
 
 ### Score-Driven Refinement Loop
 
-Error-recovery alone cannot raise a working pipeline's score; it only rescues pipelines that crash. To actively search for stronger solutions, Entropic Atlas layers a second loop on top of self-healing. After the first successful run, the handler parses a machine-readable line of the form
+Error-recovery alone cannot raise a working pipeline's score; it only rescues pipelines that crash. To actively search for stronger solutions, Spatial Atlas layers a second loop on top of self-healing. After the first successful run, the handler parses a machine-readable line of the form
 
 ```
 VALIDATION_SCORE: <float>
@@ -280,7 +280,7 @@ from the pipeline's stdout. It then asks the Strong tier model to propose one ta
 
 ### Leak Audit and Targeted Leak Registry
 
-The MLE-Bench paper and subsequent Kaggle post-mortems document a handful of competitions where the test set is reconstructable from training-set overlap, public dataset ancestry, or file metadata. Rather than hand-coding brittle exploit solvers, Entropic Atlas maintains a *leak hint registry* (`mlebench/strategies/leaks.py`) whose entries are pure text instructions injected into the Strong-tier codegen prompt when a competition is detected. Every codegen call also receives a universal *leak audit preamble* that instructs the Strong model to, before training any model, (i) compare ID-like columns between train and test, (ii) compute row fingerprints to detect row-level overlap, (iii) check temporal ordering for timestamped competitions, and (iv) hash file bytes for media-based competitions. The audit fires independently of any registered entry, so new or unregistered leaks are still caught as long as their exploit fits one of the four standard shapes. Registered entries carry competition-specific detection predicates and targeted exploit sketches that take precedence over the generic audit. This design keeps the exploit code adaptive (the Strong model writes the final pandas operations against the actual tar layout it sees at runtime) while making the audit policy auditable in one file.
+The MLE-Bench paper and subsequent Kaggle post-mortems document a handful of competitions where the test set is reconstructable from training-set overlap, public dataset ancestry, or file metadata. Rather than hand-coding brittle exploit solvers, Spatial Atlas maintains a *leak hint registry* (`mlebench/strategies/leaks.py`) whose entries are pure text instructions injected into the Strong-tier codegen prompt when a competition is detected. Every codegen call also receives a universal *leak audit preamble* that instructs the Strong model to, before training any model, (i) compare ID-like columns between train and test, (ii) compute row fingerprints to detect row-level overlap, (iii) check temporal ordering for timestamped competitions, and (iv) hash file bytes for media-based competitions. The audit fires independently of any registered entry, so new or unregistered leaks are still caught as long as their exploit fits one of the four standard shapes. Registered entries carry competition-specific detection predicates and targeted exploit sketches that take precedence over the generic audit. This design keeps the exploit code adaptive (the Strong model writes the final pandas operations against the actual tar layout it sees at runtime) while making the audit policy auditable in one file.
 
 ### Strategy Selection via Entropy
 
@@ -292,7 +292,7 @@ The entropy-guided framework also informs strategy selection for ML competitions
 
 ### A2A Protocol Compliance
 
-Entropic Atlas implements the A2A protocol specification using the official `a2a-sdk` (version >= 0.3.20). The server exposes a standard A2A endpoint that accepts JSON-RPC task submissions, streams intermediate status updates via Server-Sent Events (SSE), and returns structured results in the protocol-defined format. The agent card advertises capabilities for both FieldWorkArena and MLE-Bench task types.
+Spatial Atlas implements the A2A protocol specification using the official `a2a-sdk` (version >= 0.3.20). The server exposes a standard A2A endpoint that accepts JSON-RPC task submissions, streams intermediate status updates via Server-Sent Events (SSE), and returns structured results in the protocol-defined format. The agent card advertises capabilities for both FieldWorkArena and MLE-Bench task types.
 
 ### Deployment
 
@@ -391,7 +391,7 @@ The spatial scene graph approach has direct applications to industrial safety, w
 
 ## 10. Conclusion
 
-We have presented Entropic Atlas, a unified research agent architecture that addresses two challenging benchmarks---FieldWorkArena and MLE-Bench---through a single A2A protocol server. Our key contributions are:
+We have presented Spatial Atlas, a unified research agent architecture that addresses two challenging benchmarks---FieldWorkArena and MLE-Bench---through a single A2A protocol server. Our key contributions are:
 
 1. A **spatial scene graph engine** that eliminates VLM hallucinations in spatial reasoning by extracting structured representations and computing spatial relationships deterministically, yielding a 21--24 percentage point improvement over pure VLM baselines.
 
@@ -401,7 +401,7 @@ We have presented Entropic Atlas, a unified research agent architecture that add
 
 The unifying principle---separating computation from generation---offers a general design pattern for building reliable, interpretable AI agents. By computing what can be computed and reasoning only about what must be reasoned about, we achieve both improved accuracy and reduced cost compared to end-to-end generative approaches.
 
-Entropic Atlas is open-sourced at https://github.com/arunshar/entropic-atlas to facilitate reproducibility and further research in unified agent architectures.
+Spatial Atlas is open-sourced at https://github.com/arunshar/spatial-atlas to facilitate reproducibility and further research in unified agent architectures.
 
 ---
 

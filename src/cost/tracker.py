@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Token/Cost Budget Tracker
+Spatial Atlas — Token/Cost Budget Tracker
 
 Tracks cumulative token usage and estimated cost across LLM calls.
 """
@@ -7,7 +7,7 @@ Tracks cumulative token usage and estimated cost across LLM calls.
 import logging
 from dataclasses import dataclass, field
 
-logger = logging.getLogger("entropic-atlas.cost")
+logger = logging.getLogger("spatial-atlas.cost")
 
 
 @dataclass

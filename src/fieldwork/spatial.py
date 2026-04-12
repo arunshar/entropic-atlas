@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Spatial Intelligence Engine
+Spatial Atlas — Spatial Intelligence Engine
 
 THE CROWN JEWEL: Structured spatial scene graph for deterministic reasoning.
 
@@ -23,7 +23,7 @@ from typing import Any
 
 from llm import LLMClient
 
-logger = logging.getLogger("entropic-atlas.fieldwork.spatial")
+logger = logging.getLogger("spatial-atlas.fieldwork.spatial")
 
 
 @dataclass

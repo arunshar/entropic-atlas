@@ -1,6 +1,6 @@
-# Entropic Atlas: The "Grandma-Friendly" Tutorial
+# Spatial Atlas: The "Grandma-Friendly" Tutorial
 
-**A warm, patient, step-by-step guide to running the Entropic Atlas project from absolute zero.**
+**A warm, patient, step-by-step guide to running the Spatial Atlas project from absolute zero.**
 
 > Imagine you just got a brand-new computer and someone told you to "run this AI project." This tutorial assumes you know *nothing* about coding, terminals, or AI. We'll walk through every single click, every single word you type, and explain *why* you're doing it. Take a deep breath — you've got this!
 
@@ -28,7 +28,7 @@
 
 ## 1. What Is This Thing, Anyway?
 
-Think of **Entropic Atlas** as a very smart assistant that can do two things:
+Think of **Spatial Atlas** as a very smart assistant that can do two things:
 
 **Job #1 — "Field Work Analyst" (FieldWorkArena)**
 Imagine you show it photos and documents from a factory or warehouse. It can look at those pictures and answer questions like: "Are the workers wearing hard hats?", "How far apart are the shelves?", or "Are there any safety violations?" It doesn't just guess — it builds a mental map (called a "scene graph") and *calculates* the answers with math.
@@ -143,7 +143,7 @@ git version 2.x.x
 
 ## Step 3: Download the Project
 
-Now we're going to download the Entropic Atlas code to your computer. This is called "cloning" — think of it as photocopying the entire project folder.
+Now we're going to download the Spatial Atlas code to your computer. This is called "cloning" — think of it as photocopying the entire project folder.
 
 ### 3a. Choose where to put it
 
@@ -158,14 +158,14 @@ cd ~/Desktop
 
 Type:
 ```
-git clone https://github.com/arunshar/entropic-atlas.git
+git clone https://github.com/arunshar/spatial-atlas.git
 ```
 
-**What happens:** Git connects to GitHub (a website that stores code), downloads every file in the project, and puts it in a new folder called `entropic-atlas` on your Desktop.
+**What happens:** Git connects to GitHub (a website that stores code), downloads every file in the project, and puts it in a new folder called `spatial-atlas` on your Desktop.
 
 You'll see something like:
 ```
-Cloning into 'entropic-atlas'...
+Cloning into 'spatial-atlas'...
 remote: Enumerating objects: 150, done.
 remote: Counting objects: 100% (150/150), done.
 Receiving objects: 100% (150/150), done.
@@ -175,7 +175,7 @@ Receiving objects: 100% (150/150), done.
 
 Type:
 ```
-cd entropic-atlas
+cd spatial-atlas
 ```
 
 > Now you're inside the project! Every command from here on should be typed while you're in this folder.
@@ -199,7 +199,7 @@ The project uses OpenAI's AI to think. To use OpenAI, you need an **API key** �
 2. Sign up for an account (or log in if you have one)
 3. Click on **"API keys"** in the left sidebar
 4. Click **"Create new secret key"**
-5. Give it a name like "Entropic Atlas"
+5. Give it a name like "Spatial Atlas"
 6. **Copy the key** — it starts with `sk-` and is very long. **Save it somewhere safe!** You won't be able to see it again.
 7. You'll need to add some credits to your account (even $5 is enough to get started)
 
@@ -335,7 +335,7 @@ tests/test_agent.py::TestConfig::test_default_config PASSED
 
 ## Step 7: Start the Agent Server
 
-This is the moment! We're going to turn on the Entropic Atlas agent.
+This is the moment! We're going to turn on the Spatial Atlas agent.
 
 Type:
 ```
@@ -351,7 +351,7 @@ Let's break that command down for you:
 **What you should see:**
 ```
 ============================================================
-Entropic Atlas — Purple Agent
+Spatial Atlas — Purple Agent
 ============================================================
 Server: http://127.0.0.1:9019/
 Agent Card: http://127.0.0.1:9019/
@@ -397,7 +397,7 @@ Let's break this down:
 **What you should see:**
 ```json
 {
-    "name": "Entropic Atlas",
+    "name": "Spatial Atlas",
     "version": "1.0.0",
     "protocolVersion": "0.3.0",
     "capabilities": {
@@ -420,9 +420,9 @@ Let's break this down:
 }
 ```
 
-**If you see this, congratulations! Your Entropic Atlas agent is alive, running, and ready to accept tasks!**
+**If you see this, congratulations! Your Spatial Atlas agent is alive, running, and ready to accept tasks!**
 
-> **Grandma tip:** You just asked the server "Who are you?" and it replied with its name, version, and a list of its skills. It's like calling a restaurant and hearing their automated message: "Welcome to Entropic Atlas! We can analyze factory photos or solve data science competitions."
+> **Grandma tip:** You just asked the server "Who are you?" and it replied with its name, version, and a list of its skills. It's like calling a restaurant and hearing their automated message: "Welcome to Spatial Atlas! We can analyze factory photos or solve data science competitions."
 
 ---
 
@@ -459,12 +459,12 @@ Go to [docker.com/get-started](https://docker.com/get-started) and download Dock
 
 In your Terminal, make sure you're in the project folder, then type:
 ```
-docker build -t entropic-atlas --platform linux/amd64 .
+docker build -t spatial-atlas --platform linux/amd64 .
 ```
 
 Breaking this down:
 - `docker build` — "Build me a container"
-- `-t entropic-atlas` — "Name it 'entropic-atlas'"
+- `-t spatial-atlas` — "Name it 'spatial-atlas'"
 - `--platform linux/amd64` — "Build it for standard Linux servers" (required for the AgentBeats competition platform)
 - `.` — "Use the current folder as the source"
 
@@ -473,14 +473,14 @@ Breaking this down:
 ### Run the container
 
 ```
-docker run -p 9019:9019 --env-file .env entropic-atlas --host 0.0.0.0
+docker run -p 9019:9019 --env-file .env spatial-atlas --host 0.0.0.0
 ```
 
 Breaking this down:
 - `docker run` — "Start the container"
 - `-p 9019:9019` — "Connect my computer's door 9019 to the container's door 9019"
 - `--env-file .env` — "Pass my secret API key into the container"
-- `entropic-atlas` — "Use the container we just built"
+- `spatial-atlas` — "Use the container we just built"
 - `--host 0.0.0.0` — "Listen on all network addresses" (needed inside Docker)
 
 ### Verify it (same as before)
@@ -513,7 +513,7 @@ Don't panic! Here are the most common problems and their solutions:
 
 ### Tests fail with import errors
 **What it means:** You're running pytest from the wrong folder.
-**Fix:** Make sure you're inside the `entropic-atlas` folder (`cd entropic-atlas`) and use `uv run pytest -v` (not just `pytest`).
+**Fix:** Make sure you're inside the `spatial-atlas` folder (`cd spatial-atlas`) and use `uv run pytest -v` (not just `pytest`).
 
 ### "command not found: uv"
 **What it means:** uv isn't installed or your Terminal doesn't know where to find it.
@@ -530,7 +530,7 @@ Don't panic! Here are the most common problems and their solutions:
 Let's take a tour of the project, file by file. Think of it as a tour of a factory where our AI agent is built.
 
 ### The Front Door: `src/server.py`
-This is where everything starts. When you run the server, this file sets up the "hotel" (web server) and tells visitors what services are available. It creates an "Agent Card" — like a business card that says "Hi, I'm Entropic Atlas, and I can do field research and ML engineering."
+This is where everything starts. When you run the server, this file sets up the "hotel" (web server) and tells visitors what services are available. It creates an "Agent Card" — like a business card that says "Hi, I'm Spatial Atlas, and I can do field research and ML engineering."
 
 ### The Receptionist: `src/executor.py`
 When a request comes in through the A2A protocol, the Executor receives it. It checks: "Is this a new task? Is this task already done?" Then it creates an Agent to handle the work and monitors progress.
@@ -607,7 +607,7 @@ When you need to do it again tomorrow, here's the cheat sheet:
 
 ```bash
 # Go to the project
-cd ~/Desktop/entropic-atlas
+cd ~/Desktop/spatial-atlas
 
 # Start the server
 uv run src/server.py --host 127.0.0.1 --port 9019

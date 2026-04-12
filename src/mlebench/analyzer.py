@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Competition Analyzer
+Spatial Atlas — Competition Analyzer
 
 Reads MLE-Bench competition description and data files to determine:
 1. Task type (classification, regression, NLP, vision, time series)
@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from llm import LLMClient
 
-logger = logging.getLogger("entropic-atlas.mlebench.analyzer")
+logger = logging.getLogger("spatial-atlas.mlebench.analyzer")
 
 
 @dataclass

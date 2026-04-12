@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Core Orchestrator Agent
+Spatial Atlas — Core Orchestrator Agent
 
 THE BRAIN: Receives A2A messages, classifies domain (FieldWorkArena vs MLE-Bench),
 routes to the appropriate handler, and returns formatted artifacts.
@@ -27,7 +27,7 @@ from cost.tracker import CostTracker
 from fieldwork.handler import FieldWorkHandler
 from mlebench.handler import MLEBenchHandler
 
-logger = logging.getLogger("entropic-atlas.agent")
+logger = logging.getLogger("spatial-atlas.agent")
 
 
 class Agent:
@@ -43,7 +43,7 @@ class Agent:
         """Main entry point: classify domain and route to handler."""
         await updater.update_status(
             TaskState.working,
-            new_agent_text_message("Entropic Atlas processing..."),
+            new_agent_text_message("Spatial Atlas processing..."),
         )
 
         try:

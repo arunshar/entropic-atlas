@@ -1,4 +1,4 @@
-# Entropic Atlas — Ultra-Fine Step-by-Step Running Guide
+# Spatial Atlas — Ultra-Fine Step-by-Step Running Guide
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/arunshar/entropic-atlas.git
-cd entropic-atlas
+git clone https://github.com/arunshar/spatial-atlas.git
+cd spatial-atlas
 ```
 
 ## 2. Set Up Environment Variables
@@ -68,7 +68,7 @@ uv run src/server.py --host 127.0.0.1 --port 9019
 You should see:
 ```
 ============================================================
-Entropic Atlas — Purple Agent
+Spatial Atlas — Purple Agent
 ============================================================
 Server: http://127.0.0.1:9019/
 Agent Card: http://127.0.0.1:9019/
@@ -91,7 +91,7 @@ curl -s http://localhost:9019/.well-known/agent-card.json | python3 -m json.tool
 Expected response (formatted):
 ```json
 {
-    "name": "Entropic Atlas",
+    "name": "Spatial Atlas",
     "version": "1.0.0",
     "protocolVersion": "0.3.0",
     "capabilities": {"streaming": true},
@@ -127,10 +127,10 @@ uv run pytest -v -s
 
 ```bash
 # Build for linux/amd64 (required for AgentBeats platform)
-docker build -t entropic-atlas --platform linux/amd64 .
+docker build -t spatial-atlas --platform linux/amd64 .
 
 # Run the container
-docker run -p 9019:9019 --env-file .env entropic-atlas --host 0.0.0.0
+docker run -p 9019:9019 --env-file .env spatial-atlas --host 0.0.0.0
 
 # Verify
 curl http://localhost:9019/.well-known/agent-card.json
@@ -143,8 +143,8 @@ curl http://localhost:9019/.well-known/agent-card.json
 echo $GITHUB_TOKEN | docker login ghcr.io -u arunshar --password-stdin
 
 # Tag and push
-docker tag entropic-atlas ghcr.io/arunshar/entropic-atlas:latest
-docker push ghcr.io/arunshar/entropic-atlas:latest
+docker tag spatial-atlas ghcr.io/arunshar/spatial-atlas:latest
+docker push ghcr.io/arunshar/spatial-atlas:latest
 ```
 
 Or let GitHub Actions do it automatically — just push a tag:
@@ -164,7 +164,7 @@ uv run python -c "from huggingface_hub import login; login(token='YOUR_HF_WRITE_
 ```
 
 Then add your `OPENAI_API_KEY` as a Space Secret:
-1. Go to https://huggingface.co/spaces/Arun0808/entropic-atlas/settings
+1. Go to https://huggingface.co/spaces/Arun0808/spatial-atlas/settings
 2. Scroll to "Repository secrets"
 3. Add: Name = `OPENAI_API_KEY`, Value = your key
 
@@ -172,12 +172,12 @@ Then add your `OPENAI_API_KEY` as a Space Secret:
 
 Submit this URL as your purple agent endpoint:
 ```
-https://Arun0808-entropic-atlas.hf.space/
+https://Arun0808-spatial-atlas.hf.space/
 ```
 
 Or use the GHCR Docker image:
 ```
-ghcr.io/arunshar/entropic-atlas:latest
+ghcr.io/arunshar/spatial-atlas:latest
 ```
 
 ## Troubleshooting

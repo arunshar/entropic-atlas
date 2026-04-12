@@ -1,4 +1,4 @@
-# Entropic Atlas — Architecture Teaching Session
+# Spatial Atlas — Architecture Teaching Session
 
 ## Part 1: Theory — What Problem Are We Solving?
 
@@ -324,7 +324,7 @@ This is the difference between scoring 0.0 and 1.0 on many tasks.
 
 ### `src/entropy/engine.py` — Information Gain Estimation
 
-**Purpose:** The "entropic" in Entropic Atlas.
+**Purpose:** The entropy-guided core of Spatial Atlas.
 
 **`select_best_action()`:**
 Given multiple candidate actions, ask the fast model to rate each on information gain (1-10). Pick the highest. This is used sparingly — only when there are genuinely multiple paths to explore.
@@ -377,7 +377,7 @@ The prompt gives the LLM: competition description, file listing, data preview, a
 ### FieldWorkArena Example: "How many workers are wearing hard hats?"
 
 ```
-Green Agent                    Purple Agent (Entropic Atlas)
+Green Agent                    Purple Agent (Spatial Atlas)
      │                                    │
      │ POST / (A2A JSON-RPC)              │
      │ TextPart: "# Question..."          │

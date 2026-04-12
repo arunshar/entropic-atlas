@@ -1,5 +1,5 @@
 """
-Entropic Atlas — MLE-Bench Domain Handler
+Spatial Atlas — MLE-Bench Domain Handler
 
 Orchestrates the complete ML competition pipeline:
 1. Extract competition data from tar.gz
@@ -34,7 +34,7 @@ from mlebench.analyzer import CompetitionAnalyzer
 from mlebench.codegen import MLCodeGenerator
 from mlebench.executor import CodeExecutor
 
-logger = logging.getLogger("entropic-atlas.mlebench")
+logger = logging.getLogger("spatial-atlas.mlebench")
 
 
 # Matches lines like 'VALIDATION_SCORE: 0.8341' anywhere in stdout.

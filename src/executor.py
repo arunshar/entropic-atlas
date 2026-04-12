@@ -1,5 +1,5 @@
 """
-Entropic Atlas — A2A AgentExecutor
+Spatial Atlas — A2A AgentExecutor
 
 Routes incoming A2A requests to per-context Agent instances.
 Follows the standard AgentBeats executor pattern.

@@ -1,8 +1,8 @@
 """
-Entropic Atlas — Entropy-Guided Reasoning Engine
+Spatial Atlas — Entropy-Guided Reasoning Engine
 
 Estimates information gain to optimize reasoning trajectories.
-Continued from the entropic-crmarenapro brand innovation.
+Builds on the entropy-guided approach from Sprint 1.
 
 Core idea: Before each reasoning step, estimate which action
 would maximize information gain (reduce uncertainty the most).
@@ -13,7 +13,7 @@ import json
 import logging
 from typing import Any
 
-logger = logging.getLogger("entropic-atlas.entropy")
+logger = logging.getLogger("spatial-atlas.entropy")
 
 
 class EntropyEngine:

@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Safe Code Executor
+Spatial Atlas — Safe Code Executor
 
 Runs generated ML pipeline scripts in a subprocess with timeout.
 Captures stdout/stderr for debugging and self-healing.
@@ -10,7 +10,7 @@ import logging
 import sys
 from pathlib import Path
 
-logger = logging.getLogger("entropic-atlas.mlebench.executor")
+logger = logging.getLogger("spatial-atlas.mlebench.executor")
 
 
 class CodeExecutor:

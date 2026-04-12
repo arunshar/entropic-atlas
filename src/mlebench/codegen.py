@@ -1,5 +1,5 @@
 """
-Entropic Atlas — ML Code Generator
+Spatial Atlas — ML Code Generator
 
 Generates complete, self-contained Python scripts for MLE-Bench competitions.
 Uses strategy templates + LLM to produce runnable ML pipelines.
@@ -13,7 +13,7 @@ from mlebench.analyzer import CompetitionAnalysis
 from mlebench.strategies import get_strategy_template
 from mlebench.strategies.leaks import leak_prompt_block, match_leak
 
-logger = logging.getLogger("entropic-atlas.mlebench.codegen")
+logger = logging.getLogger("spatial-atlas.mlebench.codegen")
 
 
 CODEGEN_SYSTEM_PROMPT = """You are an expert Kaggle grandmaster who writes complete, runnable ML pipeline scripts.

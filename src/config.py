@@ -1,5 +1,5 @@
 """
-Entropic Atlas: Centralized Configuration
+Spatial Atlas: Centralized Configuration
 
 All configurable parameters in one place.
 Environment variables override defaults.
@@ -20,7 +20,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 
-logger = logging.getLogger("entropic-atlas.config")
+logger = logging.getLogger("spatial-atlas.config")
 
 
 def _env_or(var: str, default: str) -> str:

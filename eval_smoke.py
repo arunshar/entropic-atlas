@@ -1,7 +1,7 @@
 """
-Entropic Atlas: deployment smoke test.
+Spatial Atlas: deployment smoke test.
 
-Posts a synthetic FieldWorkArena-style question to a running Entropic Atlas
+Posts a synthetic FieldWorkArena-style question to a running Spatial Atlas
 instance (local or on a Hugging Face Space) and asserts we get a non-empty
 formatted answer back. Used as the deploy verification harness: run it after
 every redeploy before claiming the Space is healthy.
@@ -47,7 +47,7 @@ from a2a.types import (
 )
 
 
-DEFAULT_URL = "https://arun0808-entropic-atlas.hf.space/"
+DEFAULT_URL = "https://arun0808-spatial-atlas.hf.space/"
 
 # Text-only goal (no image). Exercises parser, classifier, reasoner, formatter.
 SMOKE_GOAL_TEXT_ONLY = """# Question
@@ -76,7 +76,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--url",
         default=DEFAULT_URL,
-        help=f"Base URL of the Entropic Atlas server (default: {DEFAULT_URL})",
+        help=f"Base URL of the Spatial Atlas server (default: {DEFAULT_URL})",
     )
     parser.add_argument(
         "--image",
@@ -193,13 +193,13 @@ def _extract_text(result: dict) -> str:
     Pull the first non-empty text field out of a Task or Message result.
 
     A2A lets the server return either a finalized Task (with artifacts,
-    a status.message, and/or history) or a bare Message. Entropic Atlas
+    a status.message, and/or history) or a bare Message. Spatial Atlas
     writes its final answer to `artifacts[*].parts[*].text` (under the
     artifact name 'Analysis' for fieldwork and 'Submission' for mlebench),
     so that shape is checked FIRST. Status-message / history fall back
     cover agents that use different conventions.
     """
-    # Shape 0 (primary for Entropic Atlas): artifacts.
+    # Shape 0 (primary for Spatial Atlas): artifacts.
     artifacts = result.get("artifacts")
     if isinstance(artifacts, list):
         for art in artifacts:

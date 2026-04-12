@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Unified LLM Interface
+Spatial Atlas — Unified LLM Interface
 
 Wraps litellm for multi-provider model access with cost tracking.
 Supports text generation, JSON mode, and vision analysis.
@@ -13,7 +13,7 @@ import litellm
 from config import Config
 from cost.tracker import CostTracker
 
-logger = logging.getLogger("entropic-atlas.llm")
+logger = logging.getLogger("spatial-atlas.llm")
 
 # Suppress litellm's verbose logging
 litellm.suppress_debug_info = True

@@ -406,7 +406,7 @@ wheels = [
 ]
 
 [[package]]
-name = "entropic-atlas"
+name = "spatial-atlas"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [

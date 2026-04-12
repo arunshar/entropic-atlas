@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Agent Unit Tests
+Spatial Atlas — Agent Unit Tests
 
 Tests domain classification, message parsing, and formatting logic
 (without requiring actual API keys or LLM calls).

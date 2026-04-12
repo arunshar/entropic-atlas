@@ -1,5 +1,5 @@
 """
-Entropic Atlas — FieldWorkArena Domain Handler
+Spatial Atlas — FieldWorkArena Domain Handler
 
 Main entry point for FieldWorkArena tasks. Orchestrates:
 1. Goal parsing (structured task extraction)
@@ -26,7 +26,7 @@ from fieldwork.spatial import SpatialAnalyzer
 from fieldwork.reasoner import FieldWorkReasoner
 from fieldwork.formatter import AnswerFormatter
 
-logger = logging.getLogger("entropic-atlas.fieldwork")
+logger = logging.getLogger("spatial-atlas.fieldwork")
 
 
 class FieldWorkHandler:
