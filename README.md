@@ -67,10 +67,12 @@ Continued from the winning entropic-crmarenapro approach:
 - On failure: read error, fix code, retry (up to 3 iterations)
 - Strategy library: tabular, NLP, vision, time series, general
 
-### 4. 3-Tier Model Routing
-- **Fast** (gpt-4.1-mini): classification, parsing, formatting
-- **Standard** (gpt-4.1): code generation, analysis
-- **Strong** (gpt-4.1): spatial reasoning, reflection, complex tasks
+### 4. 3-Tier Model Routing (frontier-routed)
+- **Fast** (`openai/gpt-4.1-mini`): classification, parsing, formatting
+- **Standard** (`openai/gpt-4.1`): code generation, mid-complexity analysis
+- **Strong** (`anthropic/claude-opus-4-6`): spatial reasoning, reflection, hard MLE iterations
+
+Earlier revisions collapsed Standard and Strong onto the same model, so the router was effectively 2-tier. The split above puts Claude Opus 4.6 only on the tasks that historically move evaluation score (reflection and code refinement), keeping average cost-per-task low while raising the ceiling on the hardest questions.
 
 ## Quick Start
 
@@ -110,12 +112,14 @@ uv run pytest -v
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | Yes | — | OpenAI API key |
-| `ANTHROPIC_API_KEY` | No | — | Anthropic API key (optional) |
+| `OPENAI_API_KEY` | Yes | (none) | OpenAI API key (fast/standard/vision tiers) |
+| `ANTHROPIC_API_KEY` | Yes | (none) | Anthropic API key (strong tier defaults to Claude Opus 4.6) |
 | `ATLAS_FAST_MODEL` | No | `openai/gpt-4.1-mini` | Fast tier model |
 | `ATLAS_STANDARD_MODEL` | No | `openai/gpt-4.1` | Standard tier model |
-| `ATLAS_STRONG_MODEL` | No | `openai/gpt-4.1` | Strong tier model |
+| `ATLAS_STRONG_MODEL` | No | `anthropic/claude-opus-4-6` | Strong tier model (frontier) |
 | `ATLAS_VISION_MODEL` | No | `openai/gpt-4.1` | Vision tier model |
+
+To run with OpenAI only (drop Anthropic), set `ATLAS_STRONG_MODEL=openai/gpt-4.1` and omit `ANTHROPIC_API_KEY`. To swap strong to Gemini 3 Pro, set `ATLAS_STRONG_MODEL=gemini/gemini-3-pro-preview` with `GEMINI_API_KEY`.
 
 ## Project Structure
 
