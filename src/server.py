@@ -1,7 +1,7 @@
 """
-Entropic Atlas — A2A Purple Agent Server
+Entropic Atlas — Spatial-Aware Research Agent (A2A Server)
 
-Spatial-aware research agent for AgentX-AgentBeats Phase 2 Sprint 2.
+Compute-grounded reasoning agent for AgentX-AgentBeats Phase 2 Sprint 2.
 Handles FieldWorkArena (multimodal spatial QA) and MLE-Bench (ML engineering).
 """
 
@@ -19,6 +19,9 @@ from a2a.types import (
     AgentSkill,
 )
 from dotenv import load_dotenv
+from starlette.requests import Request
+from starlette.responses import HTMLResponse
+from starlette.routing import Route
 
 from config import Config
 from executor import Executor
@@ -63,7 +66,7 @@ def _resolve_public_url(card_url_arg: str | None, host: str, port: int) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Entropic Atlas purple agent.")
+    parser = argparse.ArgumentParser(description="Run Entropic Atlas spatial-aware research agent.")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind the server")
     parser.add_argument("--port", type=int, default=9019, help="Port to bind the server")
     parser.add_argument("--card-url", type=str, help="URL to advertise in the agent card")
@@ -105,10 +108,10 @@ def main():
     agent_card = AgentCard(
         name="Entropic Atlas",
         description=(
-            "Spatial-aware research agent with multimodal perception and ML engineering. "
-            "Combines entropy-guided reasoning with structured spatial scene graphs "
-            "for field work analysis, and systematic ML pipelines for competition solving. "
-            "Built for AgentX-AgentBeats Phase 2 Sprint 2 Research Agent track."
+            "Spatial-aware research agent built on compute-grounded reasoning (CGR). "
+            "Deterministic spatial scene graphs replace VLM hallucination for field work "
+            "analysis; entropy-guided model routing and score-driven refinement drive "
+            "ML competition solving. A2A-compliant for AgentBeats Phase 2 Sprint 2."
         ),
         url=public_url,
         version="1.0.0",
@@ -123,13 +126,45 @@ def main():
         task_store=InMemoryTaskStore(),
     )
 
-    app = A2AStarletteApplication(
+    async def landing_page(request: Request) -> HTMLResponse:
+        skills_html = "".join(
+            f"<li><strong>{s.name}</strong>: {s.description}</li>"
+            for s in skills
+        )
+        html = f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entropic Atlas</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }}
+  h1 {{ margin-bottom: 0.25rem; }}
+  .badge {{ display: inline-block; background: #22c55e; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }}
+  a {{ color: #2563eb; }}
+  ul {{ padding-left: 1.2rem; }}
+  code {{ background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 0.9rem; }}
+</style>
+</head><body>
+<h1>Entropic Atlas</h1>
+<p><span class="badge">v{agent_card.version}</span> Spatial-aware research agent (A2A)</p>
+<h2>Skills</h2>
+<ul>{skills_html}</ul>
+<h2>Endpoints</h2>
+<ul>
+  <li><a href="/.well-known/agent-card.json">Agent Card</a> (GET)</li>
+  <li><code>POST /</code> for A2A JSON-RPC requests</li>
+</ul>
+<p><a href="https://github.com/arunshar/entropic-atlas">GitHub</a></p>
+</body></html>"""
+        return HTMLResponse(html)
+
+    a2a_app = A2AStarletteApplication(
         agent_card=agent_card,
         http_handler=request_handler,
     )
 
     print("=" * 60)
-    print("Entropic Atlas — Purple Agent")
+    print("Entropic Atlas -- Spatial-Aware Research Agent")
     print("=" * 60)
     print(f"Server: http://{args.host}:{args.port}/")
     print(f"Agent Card: {agent_card.url}")
@@ -139,8 +174,11 @@ def main():
         print(f"  - {skill.name}: {skill.description[:80]}...")
     print("=" * 60)
 
+    starlette_app = a2a_app.build()
+    starlette_app.routes.insert(0, Route("/", landing_page, methods=["GET"]))
+
     uvicorn.run(
-        app.build(),
+        starlette_app,
         host=args.host,
         port=args.port,
         timeout_keep_alive=300,
