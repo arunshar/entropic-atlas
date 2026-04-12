@@ -31,12 +31,44 @@ logging.basicConfig(
 logger = logging.getLogger("entropic-atlas")
 
 
+def _resolve_public_url(card_url_arg: str | None, host: str, port: int) -> str:
+    """
+    Pick the URL to advertise in the AgentCard.
+
+    Priority (highest first):
+      1. --card-url CLI arg (explicit override)
+      2. PUBLIC_URL env var (operator-set, any deploy target)
+      3. SPACE_HOST env var (auto-set by Hugging Face Spaces, e.g.
+         'arun0808-entropic-atlas.hf.space') which we turn into https://...
+      4. Fallback: http://{host}:{port}/ for local dev
+
+    Motivation: when the Space boots via the Dockerfile entrypoint, no
+    --card-url is passed, so the old fallback published the internal bind
+    address (http://0.0.0.0:9019/) in the agent card. Green agents following
+    that URL got connection refused.
+    """
+    if card_url_arg:
+        return card_url_arg
+
+    public_url = os.environ.get("PUBLIC_URL")
+    if public_url:
+        return public_url if public_url.endswith("/") else public_url + "/"
+
+    space_host = os.environ.get("SPACE_HOST")
+    if space_host:
+        return f"https://{space_host}/"
+
+    return f"http://{host}:{port}/"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run Entropic Atlas purple agent.")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind the server")
     parser.add_argument("--port", type=int, default=9019, help="Port to bind the server")
     parser.add_argument("--card-url", type=str, help="URL to advertise in the agent card")
     args = parser.parse_args()
+
+    public_url = _resolve_public_url(args.card_url, args.host, args.port)
 
     skills = [
         AgentSkill(
@@ -70,7 +102,7 @@ def main():
             "for field work analysis, and systematic ML pipelines for competition solving. "
             "Built for AgentX-AgentBeats Phase 2 Sprint 2 Research Agent track."
         ),
-        url=args.card_url or f"http://{args.host}:{args.port}/",
+        url=public_url,
         version="1.0.0",
         default_input_modes=["text"],
         default_output_modes=["text"],

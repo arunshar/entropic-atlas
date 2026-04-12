@@ -1,5 +1,5 @@
 """
-Entropic Atlas — Output Format Matcher
+Entropic Atlas: Output Format Matcher
 
 Ensures answers match the expected output format for FieldWorkArena scoring.
 Critical because the green agent uses exact_match, must_include, json_match, etc.
@@ -11,6 +11,24 @@ import logging
 import re
 
 logger = logging.getLogger("entropic-atlas.fieldwork.formatter")
+
+
+# Output-format keywords that mean "this is a yes/no question."
+# FieldWorkArena green agents phrase this many ways; missing any of them
+# causes a silent score 0 on boolean questions.
+_BOOLEAN_KEYWORDS = (
+    "yes/no",
+    "yes or no",
+    "y/n",
+    "boolean",
+    "bool",
+    "true/false",
+    "true or false",
+)
+
+# Fenced code block grabber (```json ... ``` or ``` ... ```).
+# Non-greedy so we don't span multiple blocks; we'll iterate over matches.
+_FENCED_CODE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
 class AnswerFormatter:
@@ -38,9 +56,9 @@ class AnswerFormatter:
         if any(kw in fmt_lower for kw in ["number", "count", "integer", "how many"]):
             return self._format_numeric(answer)
 
-        # Boolean format
-        if "yes/no" in fmt_lower or "yes or no" in fmt_lower:
-            return self._format_boolean(answer)
+        # Boolean format (see _BOOLEAN_KEYWORDS above for the full list).
+        if any(kw in fmt_lower for kw in _BOOLEAN_KEYWORDS):
+            return self._format_boolean(answer, fmt_lower)
 
         # List format
         if "list" in fmt_lower or "comma" in fmt_lower:
@@ -52,33 +70,43 @@ class AnswerFormatter:
         return answer
 
     def _format_json(self, answer: str) -> str:
-        """Extract and clean JSON from answer."""
-        # Try to parse the whole answer as JSON first
+        """
+        Extract and clean JSON from answer.
+
+        Strategy (try each; return the first one that parses):
+          1. Parse the whole answer.
+          2. Unwrap any fenced code blocks (```json ... ```) and parse each.
+          3. Scan the answer for balanced {...} or [...] substrings and
+             try every candidate, preferring the longest one. A plain
+             non-greedy or greedy regex either grabs too little or spans
+             unrelated braces; balanced scanning is the only reliable fix.
+        """
+        # 1. Whole answer.
         try:
-            parsed = json.loads(answer)
-            return json.dumps(parsed)
+            return json.dumps(json.loads(answer))
         except json.JSONDecodeError:
             pass
 
-        # Try to extract JSON object from answer
-        json_match = re.search(r'\{.*\}', answer, re.DOTALL)
-        if json_match:
+        # 2. Fenced code blocks.
+        for match in _FENCED_CODE_RE.finditer(answer):
+            candidate = match.group(1).strip()
             try:
-                parsed = json.loads(json_match.group())
-                return json.dumps(parsed)
+                return json.dumps(json.loads(candidate))
             except json.JSONDecodeError:
-                pass
+                continue
 
-        # Try JSON array
-        json_match = re.search(r'\[.*\]', answer, re.DOTALL)
-        if json_match:
+        # 3. Balanced-brace substrings, longest first.
+        candidates = sorted(
+            _iter_balanced_substrings(answer),
+            key=len,
+            reverse=True,
+        )
+        for candidate in candidates:
             try:
-                parsed = json.loads(json_match.group())
-                return json.dumps(parsed)
+                return json.dumps(json.loads(candidate))
             except json.JSONDecodeError:
-                pass
+                continue
 
-        # Return as-is if no JSON found
         logger.warning(f"Could not extract JSON from answer: {answer[:200]}")
         return answer
 
@@ -99,19 +127,41 @@ class AnswerFormatter:
 
         return answer
 
-    def _format_boolean(self, answer: str) -> str:
-        """Normalize to yes/no."""
-        answer_lower = answer.lower().strip()
-        if answer_lower in ("yes", "true", "correct", "affirmative"):
-            return "yes"
-        elif answer_lower in ("no", "false", "incorrect", "negative"):
-            return "no"
+    def _format_boolean(self, answer: str, fmt_lower: str = "") -> str:
+        """
+        Normalize to the boolean vocabulary requested by fmt_lower.
 
-        # Check if answer starts with yes/no
-        if answer_lower.startswith("yes"):
-            return "yes"
-        elif answer_lower.startswith("no"):
-            return "no"
+        Vocab selection:
+          - If fmt_lower mentions 'true' or 'bool' (but not 'yes'), return 'true'/'false'.
+          - Otherwise default to 'yes'/'no'.
+
+        Resolution:
+          1. Exact match against known affirmatives/negatives.
+          2. Starts-with check for short leading tokens ('yes, because...').
+          3. Fall back to raw answer so nothing is lost silently.
+        """
+        use_true_false = (
+            ("true" in fmt_lower or "bool" in fmt_lower) and "yes" not in fmt_lower
+        )
+        yes_token, no_token = ("true", "false") if use_true_false else ("yes", "no")
+
+        answer_lower = answer.lower().strip().rstrip(".!?")
+        affirmatives = {"yes", "true", "correct", "affirmative", "y", "t", "1"}
+        negatives = {"no", "false", "incorrect", "negative", "n", "f", "0"}
+
+        if answer_lower in affirmatives:
+            return yes_token
+        if answer_lower in negatives:
+            return no_token
+
+        # Token scan: find the FIRST affirmative or negative whole-word token
+        # in the answer. Handles both "Yes, because..." and "The answer is true."
+        # Whole-word matching avoids 'no' matching 'not' or 'none'.
+        for token in re.findall(r"[a-z0-9]+", answer_lower):
+            if token in affirmatives:
+                return yes_token
+            if token in negatives:
+                return no_token
 
         return answer
 
@@ -136,3 +186,49 @@ class AnswerFormatter:
         answer = re.sub(r'\*\*([^*]+)\*\*', r'\1', answer)
         answer = re.sub(r'\*([^*]+)\*', r'\1', answer)
         return answer.strip()
+
+
+def _iter_balanced_substrings(text: str):
+    """
+    Yield every balanced {..} or [..] substring of text.
+
+    Depth-counting scanner, not regex. Correctly handles nested braces and
+    ignores braces that appear inside JSON string literals (so `{"a":"}"}`
+    parses as one object, not two). Does not validate JSON; callers still
+    try json.loads() on each yielded candidate.
+    """
+    openers = {"{": "}", "[": "]"}
+    closers = {"}", "]"}
+
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch in openers:
+            match_close = openers[ch]
+            depth = 1
+            j = i + 1
+            in_string = False
+            escape = False
+            while j < n and depth > 0:
+                cj = text[j]
+                if in_string:
+                    if escape:
+                        escape = False
+                    elif cj == "\\":
+                        escape = True
+                    elif cj == '"':
+                        in_string = False
+                elif cj == '"':
+                    in_string = True
+                elif cj in openers:
+                    depth += 1
+                elif cj in closers:
+                    depth -= 1
+                    if depth == 0 and cj != match_close:
+                        # Mismatched close (e.g. { ... ] ); bail out of this start.
+                        break
+                j += 1
+            if depth == 0:
+                yield text[i:j]
+        i += 1

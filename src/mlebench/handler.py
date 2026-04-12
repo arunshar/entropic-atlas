@@ -16,8 +16,10 @@ Returns: (csv_bytes, summary_text)
 import base64
 import io
 import logging
+import re
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -33,6 +35,49 @@ from mlebench.codegen import MLCodeGenerator
 from mlebench.executor import CodeExecutor
 
 logger = logging.getLogger("entropic-atlas.mlebench")
+
+
+# Matches lines like 'VALIDATION_SCORE: 0.8341' anywhere in stdout.
+# Tolerates trailing text on the same line so the model can print a
+# parenthetical comment after the number.
+_VALIDATION_SCORE_RE = re.compile(
+    r"VALIDATION_SCORE:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"
+)
+
+
+def _parse_validation_score(stdout: str) -> float | None:
+    """
+    Extract the last VALIDATION_SCORE emitted by the pipeline.
+
+    Taking the LAST match (not first) lets a refined pipeline print a
+    pre-training score followed by the real post-training score without
+    us grabbing the wrong one.
+    """
+    if not stdout:
+        return None
+    matches = _VALIDATION_SCORE_RE.findall(stdout)
+    if not matches:
+        return None
+    try:
+        return float(matches[-1])
+    except ValueError:
+        return None
+
+
+def _score_is_better(
+    new: float, old: float, metric_direction: str
+) -> bool:
+    """
+    Compare scores given the direction of the competition metric.
+
+    metric_direction is a free-form string from CompetitionAnalysis. We
+    treat it as 'maximize' unless it obviously says otherwise, because
+    most Kaggle metrics in MLE-Bench are maximize (AUC, accuracy, F1).
+    """
+    direction = (metric_direction or "").lower()
+    minimize_keywords = ("min", "lower", "loss", "error", "rmse", "mae", "mse")
+    minimize = any(kw in direction for kw in minimize_keywords)
+    return (new < old) if minimize else (new > old)
 
 
 class MLEBenchHandler:
@@ -158,13 +203,146 @@ class MLEBenchHandler:
             # Last resort: generate a dummy submission
             logger.error("All attempts failed, generating dummy submission")
             csv_bytes = self._generate_dummy_submission(data_dir, analysis)
+            refinement_note = "no refinement (pipeline never succeeded)"
+        else:
+            # 6. Score-driven refinement loop.
+            #
+            # The baseline pipeline already works; now ask the strong model
+            # to propose targeted improvements. Each iteration re-runs the
+            # full pipeline, parses VALIDATION_SCORE from stdout, and keeps
+            # the better submission. Bail out on wall-time budget.
+            csv_bytes, refinement_note = await self._refine_until_best(
+                updater=updater,
+                initial_code=code,
+                initial_csv=csv_bytes,
+                work_dir=work_dir,
+                submission_path=Path(submission_path),
+                description=description,
+                file_listing=file_listing,
+                analysis=analysis,
+            )
 
         summary = (
             f"Competition: {analysis.task_type} ({analysis.metric})\n"
             f"Strategy: {analysis.strategy}\n"
-            f"Submission: {len(csv_bytes)} bytes"
+            f"Submission: {len(csv_bytes)} bytes\n"
+            f"Refinement: {refinement_note}"
         )
         return csv_bytes, summary
+
+    async def _refine_until_best(
+        self,
+        *,
+        updater: TaskUpdater,
+        initial_code: str,
+        initial_csv: bytes,
+        work_dir: Path,
+        submission_path: Path,
+        description: str,
+        file_listing: str,
+        analysis,
+    ) -> tuple[bytes, str]:
+        """
+        Run the score-driven refinement loop.
+
+        Returns (best_csv_bytes, human_readable_note). The caller does not
+        need to know how many iterations ran or whether any of them
+        improved; the note is for the summary only.
+        """
+        max_iters = self.config.max_refinement_iterations
+        wall_budget = self.config.refinement_wall_time_seconds
+
+        if max_iters <= 0:
+            return initial_csv, "disabled (max_refinement_iterations=0)"
+
+        initial_score = _parse_validation_score(self.executor.last_stdout)
+        if initial_score is None:
+            logger.info(
+                "Refinement skipped: no VALIDATION_SCORE found in pipeline stdout. "
+                "Either the pipeline did not print one or parsing failed."
+            )
+            return initial_csv, "skipped (no VALIDATION_SCORE printed)"
+
+        best_code = initial_code
+        best_csv = initial_csv
+        best_score = initial_score
+        start = time.monotonic()
+        improvements = 0
+
+        logger.info(
+            f"Refinement loop: baseline score={initial_score}, "
+            f"max_iters={max_iters}, wall_budget={wall_budget}s"
+        )
+
+        for i in range(max_iters):
+            if time.monotonic() - start > wall_budget:
+                logger.info("Refinement wall-time budget exhausted; stopping")
+                break
+
+            await updater.update_status(
+                TaskState.working,
+                new_agent_text_message(
+                    f"Refining pipeline (iteration {i + 1}/{max_iters}, "
+                    f"best score={best_score:.4f})..."
+                ),
+            )
+
+            try:
+                refined_code = await self.codegen.refine(
+                    code=best_code,
+                    current_score=best_score,
+                    metric=analysis.metric,
+                    metric_direction=analysis.metric_direction,
+                    description=description,
+                    file_listing=file_listing,
+                )
+            except Exception as e:
+                logger.warning(f"Refinement codegen failed on iter {i + 1}: {e}")
+                continue
+
+            # Re-run with the refined script. On error we keep the previous
+            # best and fall through; we do NOT call fix() here because fix
+            # exists for first-pass errors, not for refinement regressions.
+            csv_bytes = await self.executor.execute(
+                code=refined_code,
+                working_dir=work_dir,
+                submission_path=submission_path,
+            )
+            if csv_bytes is None:
+                logger.info(
+                    f"Refined pipeline on iter {i + 1} failed to run; "
+                    "keeping previous best"
+                )
+                continue
+
+            new_score = _parse_validation_score(self.executor.last_stdout)
+            if new_score is None:
+                logger.info(
+                    f"Refined pipeline on iter {i + 1} ran but printed no "
+                    "VALIDATION_SCORE; treating as non-improvement"
+                )
+                continue
+
+            if _score_is_better(new_score, best_score, analysis.metric_direction):
+                logger.info(
+                    f"Refinement iter {i + 1}: improved "
+                    f"{best_score:.4f} -> {new_score:.4f}"
+                )
+                best_code = refined_code
+                best_csv = csv_bytes
+                best_score = new_score
+                improvements += 1
+            else:
+                logger.info(
+                    f"Refinement iter {i + 1}: no improvement "
+                    f"({new_score:.4f} vs {best_score:.4f}); keeping previous"
+                )
+
+        note = (
+            f"baseline={initial_score:.4f}, best={best_score:.4f}, "
+            f"improvements={improvements}/{max_iters}"
+        )
+        return best_csv, note
 
     def _extract_competition(
         self, file_parts: list[tuple[str, str, str | bytes]]
