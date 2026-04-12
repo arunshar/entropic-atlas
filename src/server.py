@@ -20,6 +20,7 @@ from a2a.types import (
 )
 from dotenv import load_dotenv
 
+from config import Config
 from executor import Executor
 
 load_dotenv()
@@ -69,6 +70,13 @@ def main():
     args = parser.parse_args()
 
     public_url = _resolve_public_url(args.card_url, args.host, args.port)
+
+    # Validate + log the resolved model tier map BEFORE any request can
+    # arrive. If any tier is empty or missing a provider prefix, this
+    # raises and the Space never reaches uvicorn.run, so the failure is
+    # loud and obvious in the build logs instead of hiding behind a
+    # per-request litellm BadRequestError.
+    Config().log_resolved_tiers()
 
     skills = [
         AgentSkill(

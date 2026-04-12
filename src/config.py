@@ -16,26 +16,50 @@ a real frontier tier on the tasks that actually move the score needle
 (FieldWorkArena reflection, MLE-Bench code refinement).
 """
 
+import logging
 import os
 from dataclasses import dataclass, field
+
+logger = logging.getLogger("entropic-atlas.config")
+
+
+def _env_or(var: str, default: str) -> str:
+    """
+    Return os.environ[var] if set AND non-empty, otherwise `default`.
+
+    os.getenv returns an empty string for explicitly-blank env vars,
+    which in turn propagates an empty model string into litellm and
+    triggers 'LLM Provider NOT provided' errors. Treat empty strings
+    as 'not set' to keep the deploy tolerant of blank secrets on
+    Hugging Face Spaces.
+    """
+    value = os.environ.get(var)
+    return value if value else default
+
+
+# Default model identifiers. Kept at module scope (not just inside the
+# dataclass defaults) so both Config and startup logging can reference
+# them and stay in sync.
+DEFAULT_FAST_MODEL = "openai/gpt-4.1-mini"
+DEFAULT_STANDARD_MODEL = "openai/gpt-4.1"
+DEFAULT_STRONG_MODEL = "anthropic/claude-opus-4-6"
+DEFAULT_VISION_MODEL = "openai/gpt-4.1"
 
 
 @dataclass
 class Config:
     # === Model Tiers ===
     fast_model: str = field(
-        default_factory=lambda: os.getenv("ATLAS_FAST_MODEL", "openai/gpt-4.1-mini")
+        default_factory=lambda: _env_or("ATLAS_FAST_MODEL", DEFAULT_FAST_MODEL)
     )
     standard_model: str = field(
-        default_factory=lambda: os.getenv("ATLAS_STANDARD_MODEL", "openai/gpt-4.1")
+        default_factory=lambda: _env_or("ATLAS_STANDARD_MODEL", DEFAULT_STANDARD_MODEL)
     )
     strong_model: str = field(
-        default_factory=lambda: os.getenv(
-            "ATLAS_STRONG_MODEL", "anthropic/claude-opus-4-6"
-        )
+        default_factory=lambda: _env_or("ATLAS_STRONG_MODEL", DEFAULT_STRONG_MODEL)
     )
     vision_model: str = field(
-        default_factory=lambda: os.getenv("ATLAS_VISION_MODEL", "openai/gpt-4.1")
+        default_factory=lambda: _env_or("ATLAS_VISION_MODEL", DEFAULT_VISION_MODEL)
     )
 
     # === Cost Budgets ===
@@ -66,3 +90,33 @@ class Config:
             "strong": self.strong_model,
             "vision": self.vision_model,
         }
+
+    def log_resolved_tiers(self) -> None:
+        """
+        Dump the resolved model tier map to stdout + logger at startup.
+
+        This is the single best diagnostic for 'LLM Provider NOT provided'
+        errors: if a tier logged here is empty or missing its provider
+        prefix, the env var on the Space is wrong.
+        """
+        tiers = self.model_tiers
+        lines = [f"{name:10s} = {value!r}" for name, value in tiers.items()]
+        banner = "Resolved model tiers:\n  " + "\n  ".join(lines)
+        logger.info(banner)
+        print(banner)
+
+        # Hard validation: empty or provider-less models will blow up
+        # inside litellm at the first call. Crash early with a clear
+        # message instead.
+        for name, value in tiers.items():
+            if not value:
+                raise RuntimeError(
+                    f"Model tier {name!r} is empty. Check the ATLAS_{name.upper()}_MODEL "
+                    f"env var (or equivalent Space secret); blank strings are not allowed."
+                )
+            if "/" not in value:
+                raise RuntimeError(
+                    f"Model tier {name!r} = {value!r} has no provider prefix "
+                    f"(expected something like 'openai/gpt-4.1' or "
+                    f"'anthropic/claude-opus-4-6'). Fix the env var."
+                )
